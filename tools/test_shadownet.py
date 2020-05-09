@@ -10,7 +10,7 @@ Use shadow net to recognize the scene text of a single image
 """
 import argparse
 import os.path as ops
-
+import add_sys_path
 import cv2
 import numpy as np
 import tensorflow as tf
@@ -23,6 +23,8 @@ from crnn_model import crnn_net
 from data_provider import tf_io_pipline_fast_tools
 
 CFG = global_config.cfg
+
+tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
 
 def init_args():
@@ -73,13 +75,17 @@ def recognize(image_path, weights_path, char_dict_path, ord_map_dict_path, is_vi
     :return:
     """
     image = cv2.imread(image_path, cv2.IMREAD_COLOR)
-    image = cv2.resize(image, dsize=tuple(CFG.ARCH.INPUT_SIZE), interpolation=cv2.INTER_LINEAR)
+    im_width = image.shape[1]
+    im_width = im_width if im_width > CFG.ARCH.INPUT_SIZE[0] else CFG.ARCH.INPUT_SIZE[0]
+    image = cv2.resize(image, dsize=tuple((
+        im_width, CFG.ARCH.INPUT_SIZE[1])), interpolation=cv2.INTER_LINEAR)
     image_vis = image
     image = np.array(image, np.float32) / 127.5 - 1.0
 
     inputdata = tf.placeholder(
         dtype=tf.float32,
-        shape=[1, CFG.ARCH.INPUT_SIZE[1], CFG.ARCH.INPUT_SIZE[0], CFG.ARCH.INPUT_CHANNELS],
+        shape=[1, CFG.ARCH.INPUT_SIZE[1],
+               im_width, CFG.ARCH.INPUT_CHANNELS],
         name='input'
     )
 
@@ -101,9 +107,13 @@ def recognize(image_path, weights_path, char_dict_path, ord_map_dict_path, is_vi
         reuse=False
     )
 
+    seq_length = [inference_ret.shape[0]]
+
+    print("seq_length", [seq_length])
+
     decodes, _ = tf.nn.ctc_greedy_decoder(
         inference_ret,
-        CFG.ARCH.SEQ_LENGTH * np.ones(1),
+        seq_length * np.ones(1),
         merge_repeated=True
     )
 
@@ -119,7 +129,8 @@ def recognize(image_path, weights_path, char_dict_path, ord_map_dict_path, is_vi
 
     with sess.as_default():
 
-        saver.restore(sess=sess, save_path=weights_path)
+        saver.restore(
+            sess=sess, save_path=tf.train.latest_checkpoint(weights_path))
 
         preds = sess.run(decodes, feed_dict={inputdata: [image]})
 
@@ -143,7 +154,7 @@ def recognize(image_path, weights_path, char_dict_path, ord_map_dict_path, is_vi
 
 if __name__ == '__main__':
     """
-    
+
     """
     # init images
     args = init_args()
