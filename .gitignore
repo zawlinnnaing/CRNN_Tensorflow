@@ -108,7 +108,8 @@ tboard/
 
 #dataset
 data/samples/
-
+data/training-demo/
+data/test_images/
 # Model
 
 model/checkpoints/*
