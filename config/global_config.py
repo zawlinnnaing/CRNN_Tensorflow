@@ -23,15 +23,18 @@ __C.ARCH.HIDDEN_UNITS = 256
 __C.ARCH.HIDDEN_LAYERS = 2
 # Sequence length.  This has to be the width of the final feature map of the CNN, which is input size width / 4
 # __C.ARCH.SEQ_LENGTH = 70  # cn dataset
-__C.ARCH.SEQ_LENGTH = 25  # synth90k dataset
+# __C.ARCH.SEQ_LENGTH = 25  # synth90k dataset
+__C.ARCH.SEQ_LENGTH = 25  # mm nrc dataset
 # Width x height into which training / testing images are resized before feeding into the network
 # __C.ARCH.INPUT_SIZE = (280, 32)  # cn dataset
-__C.ARCH.INPUT_SIZE = (100, 32)  # synth90k dataset
+# __C.ARCH.INPUT_SIZE = (100, 32)  # synth90k dataset
+__C.ARCH.INPUT_SIZE = (100, 96)  # mm NRC dataset
 # Number of channels in images
 __C.ARCH.INPUT_CHANNELS = 3
 # Number character classes
 # __C.ARCH.NUM_CLASSES = 5825  # cn dataset
-__C.ARCH.NUM_CLASSES = 37  # synth90k dataset
+# __C.ARCH.NUM_CLASSES = 37  # synth90k dataset
+__C.ARCH.NUM_CLASSES = 214  # mm NRC dataset
 
 # Train options
 __C.TRAIN = edict()
@@ -55,12 +58,20 @@ __C.TRAIN.MOMENTUM = 0.9
 __C.TRAIN.LEARNING_RATE = 0.01
 # Set the GPU resource used during training process
 __C.TRAIN.GPU_MEMORY_FRACTION = 0.9
-# Set the GPU allow growth parameter during tensorflow training process
+# Set the GPU allow growth parameter during tensorflow training process2
 __C.TRAIN.TF_ALLOW_GROWTH = True
+
+# Set how many epochs to save per checkpoint
+__C.TRAIN.EPOCHS_PER_CHECKPOINT = 2000
+
 # Set the shadownet training batch size
-__C.TRAIN.BATCH_SIZE = 64
+# __C.TRAIN.BATCH_SIZE = 64
+__C.TRAIN.BATCH_SIZE = 6  # for NRC demo purpose
+
 # Set the shadownet validation batch size
-__C.TRAIN.VAL_BATCH_SIZE = 32
+# __C.TRAIN.VAL_BATCH_SIZE = 32
+__C.TRAIN.VAL_BATCH_SIZE = 6  # for NRC demo purpose
+
 # Set the learning rate decay steps
 __C.TRAIN.LR_DECAY_STEPS = 500000
 # Set the learning rate decay rate
@@ -84,4 +95,5 @@ __C.TEST.GPU_MEMORY_FRACTION = 0.6
 # Set the GPU allow growth parameter during tensorflow testing process
 __C.TEST.TF_ALLOW_GROWTH = False
 # Set the test batch size
-__C.TEST.BATCH_SIZE = 32
+# __C.TEST.BATCH_SIZE = 32
+__C.TEST.BATCH_SIZE = 6  # for nrc demo purpose

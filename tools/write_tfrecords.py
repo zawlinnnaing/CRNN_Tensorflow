@@ -11,7 +11,7 @@ Write tfrecords tools
 import argparse
 import os
 import os.path as ops
-
+import add_sys_path
 from data_provider import shadownet_data_feed_pipline
 
 

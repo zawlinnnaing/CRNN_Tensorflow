@@ -75,9 +75,9 @@ def _bytes_feature(value):
     """
     if not isinstance(value, bytes):
         if not isinstance(value, list):
-            value = value.encode('utf-8')
+            value = value.encode("utf-8")
         else:
-            value = [val.encode('utf-8') for val in value]
+            value = [val.encode("utf-8") for val in value]
     if not isinstance(value, list):
         value = [value]
     return tf.train.Feature(bytes_list=tf.train.BytesList(value=value))
@@ -93,19 +93,19 @@ def _is_valid_jpg_file(image_path):
     if not ops.exists(image_path):
         return False
 
-    file = open(image_path, 'rb')
+    file = open(image_path, "rb")
     data = file.read(11)
-    if data[:4] != '\xff\xd8\xff\xe0' and data[:4] != '\xff\xd8\xff\xe1':
+    if data[:4] != "\xff\xd8\xff\xe0" and data[:4] != "\xff\xd8\xff\xe1":
         file.close()
         return False
-    if data[6:] != 'JFIF\0' and data[6:] != 'Exif\0':
+    if data[6:] != "JFIF\0" and data[6:] != "Exif\0":
         file.close()
         return False
     file.close()
 
-    file = open(image_path, 'rb')
+    file = open(image_path, "rb")
     file.seek(-2, 2)
-    if file.read() != '\xff\xd9':
+    if file.read() != "\xff\xd9":
         file.close()
         return False
 
@@ -124,7 +124,7 @@ def _write_tfrecords(tfrecords_writer):
         sample_info = _SAMPLE_INFO_QUEUE.get()
 
         if sample_info == _SENTINEL:
-            log.info('Process {:d} finished writing work'.format(os.getpid()))
+            log.info("Process {:d} finished writing work".format(os.getpid()))
             tfrecords_writer.close()
             break
 
@@ -132,43 +132,55 @@ def _write_tfrecords(tfrecords_writer):
         sample_label = sample_info[1]
 
         if _is_valid_jpg_file(sample_path):
-            log.error('Image file: {:d} is not a valid jpg file'.format(sample_path))
+            log.error("Image file: {:d} is not a valid jpg file".format(sample_path))
             continue
 
         try:
             image = cv2.imread(sample_path, cv2.IMREAD_COLOR)
             if image is None:
                 continue
-            image = cv2.resize(image, dsize=tuple(CFG.ARCH.INPUT_SIZE), interpolation=cv2.INTER_LINEAR)
+            image = cv2.resize(
+                image, dsize=tuple(CFG.ARCH.INPUT_SIZE), interpolation=cv2.INTER_LINEAR
+            )
             image = image.tostring()
         except IOError as err:
             log.error(err)
             continue
 
-        features = tf.train.Features(feature={
-            'labels': _int64_feature(sample_label),
-            'images': _bytes_feature(image),
-            'imagepaths': _bytes_feature(sample_path)
-        })
+        features = tf.train.Features(
+            feature={
+                "labels": _int64_feature(sample_label),
+                "images": _bytes_feature(image),
+                "imagepaths": _bytes_feature(sample_path),
+            }
+        )
         tf_example = tf.train.Example(features=features)
         tfrecords_writer.write(tf_example.SerializeToString())
-        log.debug('Process: {:d} get sample from sample_info_queue[current_size={:d}], '
-                  'and write it to local file at time: {}'.format(
-                   os.getpid(), _SAMPLE_INFO_QUEUE.qsize(), time.strftime('%H:%M:%S')))
+        log.debug(
+            "Process: {:d} get sample from sample_info_queue[current_size={:d}], "
+            "and write it to local file at time: {}".format(
+                os.getpid(), _SAMPLE_INFO_QUEUE.qsize(), time.strftime("%H:%M:%S")
+            )
+        )
 
 
 class _FeatureIO(object):
     """
     Feature IO Base Class
     """
+
     def __init__(self, char_dict_path, ord_map_dict_path):
         """
 
         :param char_dict_path:
         :param ord_map_dict_path:
         """
-        self._char_dict = establish_char_dict.CharDictBuilder.read_char_dict(char_dict_path)
-        self._ord_map = establish_char_dict.CharDictBuilder.read_ord_map_dict(ord_map_dict_path)
+        self._char_dict = establish_char_dict.CharDictBuilder.read_char_dict(
+            char_dict_path
+        )
+        self._ord_map = establish_char_dict.CharDictBuilder.read_ord_map_dict(
+            ord_map_dict_path
+        )
         return
 
     def char_to_int(self, char):
@@ -179,7 +191,7 @@ class _FeatureIO(object):
         :param char: single character
         :return: the int index of the character
         """
-        str_key = str(ord(char)) + '_ord'
+        str_key = str(ord(char)) + "_ord"
         try:
             result = int(self._ord_map[str_key])
             return result
@@ -193,10 +205,10 @@ class _FeatureIO(object):
         :return: Character corresponding to 'number' in the char_dict
         """
         # 1 is the default value in sparse_tensor_to_str() This will be skipped when building the resulting strings
-        if number == 1 or number == '1':
-            return '\x00'
+        if number == 1 or number == "1":
+            return "\x00"
         else:
-            return self._char_dict[str(number) + '_ord']
+            return self._char_dict[str(number) + "_ord"]
 
     def encode_labels(self, labels):
         """
@@ -208,7 +220,9 @@ class _FeatureIO(object):
         encoded_labels = []
         lengths = []
         for label in labels:
-            encode_label = [self.char_to_int(char) for char in label]
+            encode_label = [
+                self.char_to_int(char) for char in label
+            ]  # INDEX LABEL ARRAY
             encoded_labels.append(encode_label)
             lengths.append(len(label))
         return encoded_labels, lengths
@@ -221,7 +235,7 @@ class _FeatureIO(object):
         indices = sparse_tensor.indices
         values = sparse_tensor.values
         # Translate from consecutive numbering into ord() values
-        values = np.array([self._ord_map[str(tmp) + '_index'] for tmp in values])
+        values = np.array([self._ord_map[str(tmp) + "_index"] for tmp in values])
         dense_shape = sparse_tensor.dense_shape
 
         number_lists = np.ones(dense_shape, dtype=values.dtype)
@@ -235,10 +249,12 @@ class _FeatureIO(object):
         for str_list in str_lists:
             # int_to_char() returns '\x00' for an input == 1, which is the default
             # value in number_lists, so we skip it when building the result
-            res.append(''.join(c for c in str_list if c != '\x00'))
+            res.append("".join(c for c in str_list if c != "\x00"))
         return res
 
-    def sparse_tensor_to_str_for_tf_serving(self, decode_indices, decode_values, decode_dense_shape):
+    def sparse_tensor_to_str_for_tf_serving(
+        self, decode_indices, decode_values, decode_dense_shape
+    ):
         """
 
         :param decode_indices:
@@ -249,7 +265,7 @@ class _FeatureIO(object):
         indices = decode_indices
         values = decode_values
         # Translate from consecutive numbering into ord() values
-        values = np.array([self._ord_map[str(tmp) + '_index'] for tmp in values])
+        values = np.array([self._ord_map[str(tmp) + "_index"] for tmp in values])
         dense_shape = decode_dense_shape
 
         number_lists = np.ones(dense_shape, dtype=values.dtype)
@@ -263,7 +279,7 @@ class _FeatureIO(object):
         for str_list in str_lists:
             # int_to_char() returns '\x00' for an input == 1, which is the default
             # value in number_lists, so we skip it when building the result
-            res.append(''.join(c for c in str_list if c != '\x00'))
+            res.append("".join(c for c in str_list if c != "\x00"))
         return res
 
 
@@ -272,7 +288,7 @@ class CrnnFeatureReader(_FeatureIO):
         Implement the crnn feature reader
     """
 
-    def __init__(self, char_dict_path, ord_map_dict_path, flags='train'):
+    def __init__(self, char_dict_path, ord_map_dict_path, flags="train"):
         """
 
         :param char_dict_path:
@@ -299,10 +315,10 @@ class CrnnFeatureReader(_FeatureIO):
         :return:
         """
         if not isinstance(value, str):
-            raise ValueError('Dataset flags shoule be str')
+            raise ValueError("Dataset flags shoule be str")
 
-        if value.lower() not in ['train', 'val', 'test']:
-            raise ValueError('Dataset flags shoule be within \'train\', \'val\', \'test\'')
+        if value.lower() not in ["train", "val", "test"]:
+            raise ValueError("Dataset flags shoule be within 'train', 'val', 'test'")
 
         self._dataset_flag = value
 
@@ -349,21 +365,22 @@ class CrnnFeatureReader(_FeatureIO):
         """
         features = tf.parse_example(
             serialized_batch,
-            features={'images': tf.FixedLenFeature([], tf.string),
-                      'imagepaths': tf.FixedLenFeature([], tf.string),
-                      'labels': tf.VarLenFeature(tf.int64),
-                      }
+            features={
+                "images": tf.FixedLenFeature([], tf.string),
+                "imagepaths": tf.FixedLenFeature([], tf.string),
+                "labels": tf.VarLenFeature(tf.int64),
+            },
         )
-        bs = features['images'].shape[0]
-        images = tf.decode_raw(features['images'], tf.uint8)
+        bs = features["images"].shape[0]
+        images = tf.decode_raw(features["images"], tf.uint8)
         w, h = tuple(CFG.ARCH.INPUT_SIZE)
         images = tf.cast(x=images, dtype=tf.float32)
         images = tf.reshape(images, [bs, h, w, CFG.ARCH.INPUT_CHANNELS])
 
-        labels = features['labels']
+        labels = features["labels"]
         labels = tf.cast(labels, tf.int32)
 
-        imagepaths = features['imagepaths']
+        imagepaths = features["imagepaths"]
 
         return images, labels, imagepaths
 
@@ -381,29 +398,31 @@ class CrnnFeatureReader(_FeatureIO):
 
         # The map transformation takes a function and applies it to every element
         # of the dataset.
-        dataset = dataset.map(map_func=self._extract_features_batch,
-                              num_parallel_calls=num_threads)
-        if self._dataset_flag == 'train':
-            dataset = dataset.map(map_func=self._augment_for_train,
-                                  num_parallel_calls=num_threads)
+        dataset = dataset.map(
+            map_func=self._extract_features_batch, num_parallel_calls=num_threads
+        )
+        if self._dataset_flag == "train":
+            dataset = dataset.map(
+                map_func=self._augment_for_train, num_parallel_calls=num_threads
+            )
         else:
-            dataset = dataset.map(map_func=self._augment_for_validation,
-                                  num_parallel_calls=num_threads)
-        dataset = dataset.map(map_func=self._normalize,
-                              num_parallel_calls=num_threads)
+            dataset = dataset.map(
+                map_func=self._augment_for_validation, num_parallel_calls=num_threads
+            )
+        dataset = dataset.map(map_func=self._normalize, num_parallel_calls=num_threads)
 
         # The shuffle transformation uses a finite-sized buffer to shuffle elements
         # in memory. The parameter is the number of elements in the buffer. For
         # completely uniform shuffling, set the parameter to be the same as the
         # number of elements in the dataset.
-        if self._dataset_flag != 'test':
+        if self._dataset_flag != "test":
             dataset = dataset.shuffle(buffer_size=128)
             # repeat num epochs
             dataset = dataset.repeat()
 
         iterator = dataset.make_one_shot_iterator()
 
-        return iterator.get_next(name='{:s}_IteratorGetNext'.format(self._dataset_flag))
+        return iterator.get_next(name="{:s}_IteratorGetNext".format(self._dataset_flag))
 
 
 class CrnnFeatureWriter(_FeatureIO):
@@ -411,9 +430,16 @@ class CrnnFeatureWriter(_FeatureIO):
     crnn tensorflow tfrecords writer
     """
 
-    def __init__(self, annotation_infos, lexicon_infos,
-                 char_dict_path, ord_map_dict_path,
-                 tfrecords_save_dir, writer_process_nums, dataset_flag):
+    def __init__(
+        self,
+        annotation_infos,
+        lexicon_infos,
+        char_dict_path,
+        ord_map_dict_path,
+        tfrecords_save_dir,
+        writer_process_nums,
+        dataset_flag,
+    ):
         """
         Every file path should be checked outside of the class, make sure the file path is valid when you
         call the class. Make sure the info list is not empty when you call the class. I will put all the
@@ -429,8 +455,7 @@ class CrnnFeatureWriter(_FeatureIO):
         :param dataset_flag: dataset flag which will be the tfrecords file's prefix name
         """
         super(CrnnFeatureWriter, self).__init__(
-            char_dict_path=char_dict_path,
-            ord_map_dict_path=ord_map_dict_path
+            char_dict_path=char_dict_path, ord_map_dict_path=ord_map_dict_path
         )
 
         # init sample info queue
@@ -446,7 +471,11 @@ class CrnnFeatureWriter(_FeatureIO):
         Read index file and put example info into SAMPLE_INFO_QUEUE
         :return:
         """
-        log.info('Start filling {:s} dataset sample information queue...'.format(self._dataset_flag))
+        log.info(
+            "Start filling {:s} dataset sample information queue...".format(
+                self._dataset_flag
+            )
+        )
 
         t_start = time.time()
         for annotation_info in tqdm.tqdm(self._annotation_infos):
@@ -459,33 +488,42 @@ class CrnnFeatureWriter(_FeatureIO):
 
                 _SAMPLE_INFO_QUEUE.put((image_path, encoded_label[0]))
             except IndexError:
-                log.error('Lexicon doesn\'t contain lexicon index {:d}'.format(lexicon_index))
+                log.error(
+                    "Lexicon doesn't contain lexicon index {:d}".format(lexicon_index)
+                )
                 continue
         for i in range(self._writer_process_nums):
             _SAMPLE_INFO_QUEUE.put(_SENTINEL)
-        log.debug('Complete filling dataset sample information queue[current size: {:d}], cost time: {:.5f}s'.format(
-            _SAMPLE_INFO_QUEUE.qsize(),
-            time.time() - t_start
-        ))
+        log.debug(
+            "Complete filling dataset sample information queue[current size: {:d}], cost time: {:.5f}s".format(
+                _SAMPLE_INFO_QUEUE.qsize(), time.time() - t_start
+            )
+        )
 
     def run(self):
         """
 
         :return:
         """
-        log.info('Start write tensorflow records for {:s}...'.format(self._dataset_flag))
+        log.info(
+            "Start write tensorflow records for {:s}...".format(self._dataset_flag)
+        )
 
         process_pool = []
         tfwriters = []
         for i in range(self._writer_process_nums):
-            tfrecords_save_name = '{:s}_{:d}.tfrecords'.format(self._dataset_flag, i + 1)
-            tfrecords_save_path = ops.join(self._tfrecords_save_dir, tfrecords_save_name)
+            tfrecords_save_name = "{:s}_{:d}.tfrecords".format(
+                self._dataset_flag, i + 1
+            )
+            tfrecords_save_path = ops.join(
+                self._tfrecords_save_dir, tfrecords_save_name
+            )
 
             tfrecords_io_writer = tf.python_io.TFRecordWriter(path=tfrecords_save_path)
             process = Process(
                 target=_write_tfrecords,
-                name='Subprocess_{:d}'.format(i + 1),
-                args=(tfrecords_io_writer,)
+                name="Subprocess_{:d}".format(i + 1),
+                args=(tfrecords_io_writer,),
             )
             process_pool.append(process)
             tfwriters.append(tfrecords_io_writer)
@@ -494,4 +532,4 @@ class CrnnFeatureWriter(_FeatureIO):
         for process in process_pool:
             process.join()
 
-        log.info('Finished writing down the tensorflow records file')
+        log.info("Finished writing down the tensorflow records file")
