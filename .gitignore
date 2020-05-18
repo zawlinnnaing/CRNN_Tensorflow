@@ -114,3 +114,6 @@ data/test_images/
 
 model/checkpoints/*
 model/nrc-demo/*
+
+# Editor
+.vscode/
