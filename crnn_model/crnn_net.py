@@ -174,7 +174,27 @@ class ShadowNet(cnn_basenet.CNNBaseModel):
 
             relu8 = self.relu(inputdata=bn8, name="relu8")
 
-        return relu8
+            max_pool8 = self.maxpooling(
+                inputdata=relu8, kernel_size=[2, 1], stride=[2, 1], name="max_pool8"
+            )
+
+            conv9 = self.conv2d(
+                inputdata=max_pool8,
+                out_channel=512,
+                kernel_size=3,
+                stride=1,
+                name="conv9",
+            )
+
+            bn9 = self.layerbn(
+                inputdata=conv9, is_training=self._is_training, name="bn9"
+            )
+
+            relu9 = self.relu(inputdata=bn9, name="relu9")
+
+        print("final layer shape", relu9)
+
+        return relu9
 
     def _map_to_sequence(self, inputdata, name):
         """ Implements the map to sequence part of the network.

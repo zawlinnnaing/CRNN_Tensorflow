@@ -10,6 +10,12 @@ python tools/test_shadownet.py --image_path data/samples/chromatophilic\ touchup
 
 ### NRC demo
 
+- Data preparation
+
+```sh
+python tools/write_tfrecords.py --dataset_dir data/training-demo --save_dir data/training-demo/tfrecords
+```
+
 - Training
 
 ```sh
@@ -19,7 +25,7 @@ python tools/train_shadownet.py --dataset_dir data/training-demo --char_dict_pat
 - Test
 
 ```sh
-python tools/test_shadownet.py --image_path data/training-demo/dob-YGN12002.1.jpg --char_dict_path data/char_dict/char_dict_mm.json --ord_map_dict_path data/char_dict/ord_map_mm.json --weights_path model/nrc-demo
+python tools/test_shadownet.py --image_path data/training-demo/name-YGN12084.1.jpg --char_dict_path data/char_dict/char_dict_mm.json --ord_map_dict_path data/char_dict/ord_map_mm.json --weights_path model/nrc-demo -v 1
 ```
 
 ## Implementation Detail for NRC-OCR

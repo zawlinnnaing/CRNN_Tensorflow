@@ -263,9 +263,12 @@ def train_shadownet(
 
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
     with tf.control_dependencies(update_ops):
-        optimizer = tf.train.MomentumOptimizer(
-            learning_rate=learning_rate, momentum=0.9
-        ).minimize(loss=train_ctc_loss, global_step=global_step)
+        # optimizer = tf.train.MomentumOptimizer(
+        #     learning_rate=learning_rate, momentum=0.9
+        # ).minimize(loss=train_ctc_loss, global_step=global_step)
+        optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(
+            loss=train_ctc_loss, global_step=global_step
+        )
 
     # Set tf summary
     tboard_save_dir = "tboard/crnn_syn90k"

@@ -24,11 +24,12 @@ __C.ARCH.HIDDEN_LAYERS = 2
 # Sequence length.  This has to be the width of the final feature map of the CNN, which is input size width / 4
 # __C.ARCH.SEQ_LENGTH = 70  # cn dataset
 # __C.ARCH.SEQ_LENGTH = 25  # synth90k dataset
-__C.ARCH.SEQ_LENGTH = 25  # mm nrc dataset
+__C.ARCH.SEQ_LENGTH = 100  # mm nrc dataset
 # Width x height into which training / testing images are resized before feeding into the network
 # __C.ARCH.INPUT_SIZE = (280, 32)  # cn dataset
 # __C.ARCH.INPUT_SIZE = (100, 32)  # synth90k dataset
-__C.ARCH.INPUT_SIZE = (100, 96)  # mm NRC dataset
+# NOTE if you change this, you need to re-generate tfrecords
+__C.ARCH.INPUT_SIZE = (400, 128)  # mm NRC dataset
 # Number of channels in images
 __C.ARCH.INPUT_CHANNELS = 3
 # Number character classes
@@ -62,7 +63,7 @@ __C.TRAIN.GPU_MEMORY_FRACTION = 0.9
 __C.TRAIN.TF_ALLOW_GROWTH = True
 
 # Set how many epochs to save per checkpoint
-__C.TRAIN.EPOCHS_PER_CHECKPOINT = 2000
+__C.TRAIN.EPOCHS_PER_CHECKPOINT = 500
 
 # Set the shadownet training batch size
 # __C.TRAIN.BATCH_SIZE = 64

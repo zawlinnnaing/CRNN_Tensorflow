@@ -113,3 +113,4 @@ data/test_images/
 # Model
 
 model/checkpoints/*
+model/nrc-demo/*
