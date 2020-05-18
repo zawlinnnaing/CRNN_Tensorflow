@@ -112,8 +112,7 @@ data/training-demo/
 data/test_images/
 # Model
 
-model/checkpoints/*
-model/nrc-demo/*
+model/*
 
 # Editor
 .vscode/
