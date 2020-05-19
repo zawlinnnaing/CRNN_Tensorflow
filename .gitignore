@@ -107,12 +107,13 @@ tboard/
 .idea/
 
 #dataset
-data/samples/
-data/training-demo/
-data/test_images/
+data/*
+!data/char_dict
+!data/charset
 # Model
 
 model/*
 
 # Editor
 .vscode/
+.idea/
