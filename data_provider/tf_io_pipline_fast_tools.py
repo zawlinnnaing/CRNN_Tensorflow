@@ -21,7 +21,7 @@ import tensorflow as tf
 import tqdm
 
 from config import global_config
-from local_utils import establish_char_dict
+from local_utils import establish_char_dict, augmentation
 
 CFG = global_config.cfg
 
@@ -253,7 +253,7 @@ class _FeatureIO(object):
         return res
 
     def sparse_tensor_to_str_for_tf_serving(
-        self, decode_indices, decode_values, decode_dense_shape
+            self, decode_indices, decode_values, decode_dense_shape
     ):
         """
 
@@ -325,12 +325,17 @@ class CrnnFeatureReader(_FeatureIO):
     @staticmethod
     def _augment_for_train(input_images, input_labels, input_image_paths):
         """
+        # TODO:: implement data augmentation here.
 
         :param input_images:
         :param input_labels:
         :param input_image_paths:
         :return:
         """
+
+        print("from map func", input_image_paths.shape, input_images.shape, input_labels.shape)
+        augmentation.augment_images(input_images, input_labels, input_image_paths)
+
         return input_images, input_labels, input_image_paths
 
     @staticmethod
@@ -342,7 +347,8 @@ class CrnnFeatureReader(_FeatureIO):
         :param input_image_paths:
         :return:
         """
-        return input_images, input_labels, input_image_paths
+        # return input_images, input_labels, input_image_paths
+        return augmentation.augment_images(input_images, input_labels, input_image_paths)
 
     @staticmethod
     def _normalize(input_images, input_labels, input_image_paths):
@@ -395,7 +401,6 @@ class CrnnFeatureReader(_FeatureIO):
         dataset = tf.data.TFRecordDataset(tfrecords_path)
 
         dataset = dataset.batch(batch_size, drop_remainder=True)
-
         # The map transformation takes a function and applies it to every element
         # of the dataset.
         dataset = dataset.map(
@@ -431,14 +436,14 @@ class CrnnFeatureWriter(_FeatureIO):
     """
 
     def __init__(
-        self,
-        annotation_infos,
-        lexicon_infos,
-        char_dict_path,
-        ord_map_dict_path,
-        tfrecords_save_dir,
-        writer_process_nums,
-        dataset_flag,
+            self,
+            annotation_infos,
+            lexicon_infos,
+            char_dict_path,
+            ord_map_dict_path,
+            tfrecords_save_dir,
+            writer_process_nums,
+            dataset_flag,
     ):
         """
         Every file path should be checked outside of the class, make sure the file path is valid when you

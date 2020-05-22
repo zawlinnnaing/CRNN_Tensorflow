@@ -177,6 +177,7 @@ def train_shadownet(
 ):
     """
 
+    :param model_path:
     :param dataset_dir:
     :param weights_path:
     :param char_dict_path:
